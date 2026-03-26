@@ -41,3 +41,37 @@ pip install -r requirements.txt
 5. Add tests to verify key behaviors.
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
+
+## Final Design
+
+PawPal+ is a Streamlit app that helps a pet owner choose which pet care tasks to do in a day.
+
+### Core classes
+
+- `Task`: stores title, duration, priority, preferred time, and completion state
+- `Pet`: stores pet info and its list of care tasks
+- `Owner`: stores owner info and time available for the day
+- `Scheduler`: sorts tasks, selects tasks that fit the time limit, and explains the schedule
+
+## Scheduling Rules
+
+The scheduler considers:
+
+- task priority
+- task duration
+- preferred time of day
+- total available time for the owner
+
+Higher-priority tasks are selected first. If a task would exceed the owner's available time, it is skipped.
+
+## Running the app
+
+```bash
+streamlit run app.py
+```
+
+## Running tests
+
+```bash
+python -m pytest
+```
