@@ -2,70 +2,149 @@
 
 ## 1. System Design
 
-**a. Initial design**
+### a. Initial design
 
-- My initial UML design used four classes: Task, Pet, Owner, and Scheduler.
-- Task was responsible for storing the details of a single pet care activity, including title, duration, priority, preferred time, and completion status. Pet stored the pet's basic info and a list of tasks. Owner stored the owner's name and the total time available for pet care in a day. Scheduler handled the main logic for sorting tasks, choosing which tasks fit in the day, and explaining why the final schedule was chosen.
+Three core actions I wanted the system to support were:
 
-**b. Design changes**
+1. Add a pet and store its basic information.
+2. Schedule pet care tasks such as feeding, walks, medications, grooming, and appointments.
+3. View and manage an organized schedule across multiple pets.
 
-- Yes, my design changed during implementation.
-- At first, I only planned to store task title, duration, and priority. During implementation, I added a preferred_time attribute so the scheduler could make more structured choices when tasks had the same priority. This made the plan easier to explain and gave the app a clearer scheduling rule.
+My initial UML design used four classes: `Owner`, `Pet`, `Task`, and `Scheduler`.
+
+- `Task` was responsible for storing one care activity, including its description, date, time, recurrence, and completion status.
+- `Pet` stored the pet's identifying information and its list of tasks.
+- `Owner` stored the owner's name and the list of pets.
+- `Scheduler` acted as the logic layer that pulled tasks from all pets and performed scheduling operations on them.
+
+### b. Design changes
+
+My design changed during implementation in two important ways.
+
+First, I added a `priority` field and a `category` field to `Task`. This made the UI and CLI output easier to read and gave me a stronger algorithmic feature: sorting by priority and then time.
+
+Second, I added JSON persistence methods to `Owner` so the Streamlit app could save and load pets and tasks between runs. That made the project feel more complete without changing the core class structure.
 
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
 
-**a. Constraints and priorities**
+### a. Constraints and priorities
 
-- My scheduler considers four main constraints: the owner's available time, the priority of each task, the duration of each task, and the preferred time of day.
-- I treated priority as the most important factor because essential pet care tasks like medication or feeding should happen before lower-priority tasks. After that, I used available time as the next major constraint because the owner may not have enough time to complete everything in one day.
+My scheduler considers these main constraints:
 
-**b. Tradeoffs**
+- due date
+- due time
+- completion status
+- pet name
+- priority level
+- recurrence pattern
 
-- One tradeoff my scheduler makes is that it uses a greedy strategy. It selects the highest-priority tasks first until the time budget runs out.
-- This is reasonable for the scenario because the app is meant to be simple, understandable, and useful for a busy pet owner. A more advanced optimization system might produce a different plan, but it would also be harder to explain and test.
+For everyday use, I treated date and time as the primary scheduling constraints because the app is built around a calendar-like workflow. I treated priority as an additional useful layer so the system can also show which tasks matter most first.
+
+### b. Tradeoffs
+
+A major tradeoff in my scheduler is that conflict detection only checks for exact matching date and time values.
+
+That is reasonable for this project because the `Task` model does not include a start/end range or duration-based overlap logic. Keeping conflict detection lightweight made the code easier to understand, test, and connect to the UI, while still giving the user a helpful warning when two tasks collide exactly.
+
+Another tradeoff is that `next_available_slot()` looks for unused exact time slots rather than building a full optimization schedule. I kept that method simple because the assignment emphasized readable, testable algorithmic features over heavy optimization.
 
 ---
 
 ## 3. AI Collaboration
 
-**a. How you used AI**
+### a. How you used AI
 
-- I used AI for design brainstorming, generating starter class structures, checking test ideas, and revising explanations in the reflection and README.
-- The most helpful prompts were the ones that asked for step-by-step help, such as asking for class responsibilities, sample test cases, and how to connect a Python backend to Streamlit.
+I used AI to help with:
 
-**b. Judgment and verification**
+- brainstorming the class design
+- turning the UML into Python class skeletons
+- drafting and revising scheduler methods
+- generating pytest ideas
+- cleaning up the Streamlit integration
+- improving documentation wording
 
-- One moment where I did not accept an AI suggestion as-is was when I reviewed the project scope and noticed that some ideas were more complex than the starter app required.
-- I evaluated the suggestion by comparing it to the assignment requirements and simplifying the design so it stayed focused on priority, duration, time limits, and explainable scheduling. I also verified the logic by running tests.
+The most helpful prompts were specific prompts tied to one task at a time, such as asking for a Mermaid class diagram, asking how a `Scheduler` should retrieve tasks from an `Owner`, or asking what the most important scheduler edge cases were for testing.
+
+Using separate chats for design, algorithms, and testing helped me stay more organized because each conversation had a narrower goal.
+
+### b. Judgment and verification
+
+One AI suggestion I rejected was the idea of introducing extra architecture too early, such as separate notification-style or database-style classes before the core scheduler was stable.
+
+I decided against that because the rubric was focused on `Owner`, `Pet`, `Task`, and `Scheduler`. I compared the suggestion against the assignment requirements, kept the class design smaller, and verified correctness by running the CLI demo and the pytest suite after each major change.
 
 ---
 
 ## 4. Testing and Verification
 
-**a. What you tested**
+### a. What you tested
 
-- I tested adding tasks to a pet, sorting tasks by priority, limiting the schedule to the owner's available minutes, and generating explanations for the final plan.
-- These tests were important because they covered the most important behaviors of the scheduler and helped confirm that the app produced a valid daily plan.
+I tested these core behaviors:
 
-**b. Confidence**
+- marking a task complete
+- adding a task to a pet
+- sorting tasks in chronological order
+- creating the next occurrence for a daily recurring task
+- detecting exact-time conflicts across pets
+- sorting by priority
+- saving and loading owner data through JSON
 
-- I am fairly confident that the scheduler works correctly for the core use case.
-- If I had more time, I would test more edge cases such as tasks with equal priorities, empty task lists, invalid durations, editing tasks, and more advanced tie-breaking rules.
+These tests mattered because they covered the most important behaviors promised by the backend and documented in the README.
+
+### b. Confidence
+
+I am confident that the core system works well for the intended use case.
+
+The areas I would test next are:
+
+- invalid time input edge cases
+- duplicate pet names
+- weekly recurrence edge cases
+- cases with no tasks
+- larger numbers of pets and tasks
+- more advanced overlap detection if task durations were ever added
 
 ---
 
 ## 5. Reflection
 
-**a. What went well**
+### a. What went well
 
-- The part I am most satisfied with is the separation of responsibilities between the classes. The backend logic stayed organized, and it was straightforward to connect it to the Streamlit interface.
+The strongest part of the project is the separation between the backend logic and the UI. Once the classes were clear, it became much easier to build the CLI demo, write tests, and then connect the same logic to Streamlit.
 
-**b. What you would improve**
+### b. What you would improve
 
-- If I had another iteration, I would improve the scheduler by allowing task editing, saving data between sessions, and supporting more advanced planning rules such as deadlines or recurring tasks.
+If I had another iteration, I would improve the system by adding task editing and deletion directly in the UI, stronger validation messages, and a richer scheduling model that could reason about duration-based overlaps instead of exact-time matches only.
 
-**c. Key takeaway**
+### c. Key takeaway
 
-- One important thing I learned is that a clear class design makes implementation much easier. I also learned that AI is most useful when I treat it as a collaborator and still verify whether its suggestions fit the actual project requirements.
+My biggest takeaway is that AI is most useful when I stay in charge of the architecture. It was very helpful for scaffolding, refactoring, and testing ideas, but the project only stayed coherent when I kept checking whether each suggestion actually matched the rubric, the UML, and the final implementation.
+
+---
+
+## 6. Prompt / Strategy Comparison
+
+I compared two different AI prompting strategies while working on the scheduler.
+
+### Strategy 1: broad prompt
+Example style:
+“Build the whole PawPal+ project with classes, scheduling logic, tests, README, and Streamlit.”
+
+This approach was useful for quickly getting a rough draft, but the suggestions were often too broad. It sometimes mixed together different project ideas, introduced features that were outside the rubric, or produced files that did not stay fully aligned with each other.
+
+### Strategy 2: narrow step-by-step prompts
+Example style:
+- “Write only the `Task`, `Pet`, `Owner`, and `Scheduler` classes to match this rubric.”
+- “Now update only `main.py` so it demonstrates two pets and scheduler output.”
+- “Now write pytest tests for sorting, recurrence, and conflict detection.”
+- “Now revise the README so it matches the actual implementation.”
+
+This strategy worked much better. The outputs were more accurate, easier to verify, and easier to keep consistent with the UML and rubric.
+
+### Which strategy was better and why
+
+The narrow, step-by-step prompting strategy was clearly more useful for this project.
+
+It reduced contradictions between files, made debugging easier, and gave me more control over design decisions. It also made it easier to reject AI suggestions that added unnecessary complexity. The experience showed me that AI is more reliable when I use it to solve one clearly defined problem at a time instead of asking for the entire project in one prompt.

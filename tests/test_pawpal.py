@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 
-from pawpal_system import Owner, Pet, Task, Scheduler
+from pawpal_system import Owner, Pet, Scheduler, Task
 
 
 def test_task_mark_complete_changes_status():
@@ -67,3 +67,34 @@ def test_conflict_detection_flags_same_time_tasks():
 
     assert len(conflicts) == 1
     assert "08:00" in conflicts[0]
+
+
+def test_priority_sorting_places_high_before_low():
+    owner = Owner("Alex")
+    luna = Pet("Luna", "Dog", 4)
+    owner.add_pet(luna)
+
+    today = date.today()
+    luna.add_task(Task("Play", "09:00", today, priority="low"))
+    luna.add_task(Task("Medication", "10:00", today, priority="high"))
+
+    scheduler = Scheduler(owner)
+    sorted_tasks = scheduler.sort_by_priority_then_time()
+
+    descriptions = [task.description for _, task in sorted_tasks]
+    assert descriptions == ["Medication", "Play"]
+
+
+def test_owner_save_and_load_round_trip(tmp_path):
+    owner = Owner("Alex")
+    luna = Pet("Luna", "Dog", 4)
+    owner.add_pet(luna)
+    luna.add_task(Task("Morning walk", "08:00", date.today(), "daily", "high"))
+
+    save_path = tmp_path / "pawpal_data.json"
+    owner.save_to_json(str(save_path))
+    loaded_owner = Owner.load_from_json(str(save_path))
+
+    assert loaded_owner.name == "Alex"
+    assert len(loaded_owner.pets) == 1
+    assert loaded_owner.pets[0].tasks[0].description == "Morning walk"
